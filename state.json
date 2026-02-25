@@ -2,9 +2,11 @@
   "items": {
     "cyber": {
       "Q2-2026": [
-        "Secure Instant Messaging",
-        "Data Loss Prevention",
-        "Secure Data Destruction"
+        "Secure Instant Messaging"
+      ],
+      "Q3-2026": [
+        "Secure Data Destruction",
+        "Data Loss Prevention"
       ],
       "Q4-2026": [
         "Network Security Monitoring"
@@ -309,12 +311,7 @@
     }
   },
   "spStatus": {
-    "applications::Q2-2026::Warehouse Management System": "no",
-    "applications::Q3-2026::Fleet, Bus & Ground Staff Management": "yes",
-    "applications::Q2-2027::Games Energy Council (GEC)": "unknown",
-    "applications::Q3-2027::Games Learning": "yes",
-    "applications::Q2-2027::Work Order System": "no",
-    "cyber::Q2-2026::Data Loss Prevention": "yes",
-    "cyber::Q2-2026::Secure Instant Messaging": "yes"
+    "cyber::Q2-2026::Secure Instant Messaging": "yes",
+    "cyber::Q3-2026::Data Loss Prevention": "yes"
   }
 }

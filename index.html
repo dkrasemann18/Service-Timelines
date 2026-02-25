@@ -40,6 +40,17 @@
   .hdr-btn { padding: 7px 13px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
   .hdr-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
   .hdr-btn.danger:hover { background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.5); color: #fff; }
+  .sync-pill { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.45); white-space: nowrap; transition: all 0.2s; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #6B7280; flex-shrink: 0; }
+  .sync-pill.synced { color: #4ADE80; border-color: rgba(74,222,128,0.3); }
+  .sync-pill.synced .sync-dot { background: #4ADE80; }
+  .sync-pill.saving { color: #FCD34D; border-color: rgba(252,211,77,0.3); }
+  .sync-pill.saving .sync-dot { background: #FCD34D; animation: syncPulse 0.7s ease-in-out infinite; }
+  .sync-pill.syncing { color: #93C5FD; border-color: rgba(147,197,253,0.3); }
+  .sync-pill.syncing .sync-dot { background: #93C5FD; animation: syncPulse 0.7s ease-in-out infinite; }
+  .sync-pill.error { color: #F87171; border-color: rgba(248,113,113,0.3); }
+  .sync-pill.error .sync-dot { background: #F87171; }
+  @keyframes syncPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   /* ═══ TABS ═══ */
   .tabs { display: flex; padding: 0 24px; border-top: 1px solid rgba(255,255,255,0.07); overflow-x: auto; scrollbar-width: none; }
@@ -259,6 +270,8 @@
         <input type="text" id="searchInput" placeholder="Search deliverables…" autocomplete="off" spellcheck="false">
         <button class="search-clear" id="searchClear">✕</button>
       </div>
+      <span class="sync-pill" id="syncPill" title="GitHub sync status — click to configure" style="cursor:pointer" onclick="openPatModal()"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not configured</span></span>
+      <button class="hdr-btn" onclick="syncNow()" title="Pull latest changes from GitHub">↻ Pull latest</button>
       <button class="hdr-btn" onclick="exportState()" title="Export a self-contained HTML file to share with your team">⬇ Export to share</button>
       <button class="hdr-btn" onclick="openAddModal()">＋ Add Deliverable</button>
       <button class="hdr-btn danger" onclick="confirmReset()">↺ Reset</button>
@@ -301,6 +314,29 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- GitHub PAT modal -->
+<div class="modal-overlay" id="patModal" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <h3>GitHub Sync — Setup</h3>
+    <p style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;line-height:1.5">
+      Enter your GitHub Personal Access Token to enable live sync. It is stored only in <em>your</em> browser — it is never uploaded to GitHub or shared with anyone.
+    </p>
+    <label>Personal Access Token</label>
+    <input type="password" id="patInput" placeholder="github_pat_…" autocomplete="off" style="font-family:monospace;letter-spacing:0.02em">
+    <p id="patError" style="font-size:0.78rem;min-height:1.2em;margin-top:4px;color:#DC2626"></p>
+    <div id="patShareRow" style="display:none;margin-top:10px;padding:10px 12px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;font-size:0.78rem;color:#0369A1;line-height:1.5">
+      <strong>Share with your team:</strong> Copy the link below and send it (e.g. via Teams or email). When a colleague opens it, sync is configured automatically — no GitHub account needed.<br>
+      <input id="patShareLink" readonly onclick="this.select()" style="margin-top:6px;width:100%;font-family:monospace;font-size:0.7rem;padding:5px 7px;border:1px solid #BAE6FD;border-radius:5px;background:#fff;color:#0369A1;cursor:text">
+      <button onclick="copySetupLink()" style="margin-top:6px;padding:4px 10px;background:#0369A1;color:#fff;border:none;border-radius:5px;font-size:0.72rem;cursor:pointer;font-weight:600">Copy link</button>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closePatModal()">Cancel</button>
+      <button class="modal-btn secondary" style="color:#DC2626" onclick="clearPat()">Clear token</button>
+      <button class="modal-btn primary" onclick="savePat()">Save &amp; Sync</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ─── QUARTERS / YEARS ─── */
@@ -414,6 +450,15 @@ const SP_LABEL = { unknown:'Not yet determined', yes:'Existing SP', no:'New SP' 
 /* ─── MUTABLE STATE ─── */
 DEPTS.forEach(d => { d.items = JSON.parse(JSON.stringify(DEFAULTS[d.id])); });
 
+/* ─── GITHUB SYNC CONFIG ─── */
+const GITHUB_CONFIG = {
+  owner:  'dkrasemann18',
+  repo:   'Service-Timelines',
+  branch: 'main',
+  path:   'state.json',
+  get token() { return localStorage.getItem('gh_pat') || ''; }
+};
+
 // SP_STATUS: key = "deptId::qKey::name", value = 'unknown'|'yes'|'no'
 let SP_STATUS = {};
 
@@ -432,17 +477,88 @@ const SP_FILTER = {};
   } catch(e) {}
 })();
 
-function saveState() {
+async function saveState() {
   const state = {}; DEPTS.forEach(d => { state[d.id] = d.items; });
   try { localStorage.setItem('timelines_la2028_v2', JSON.stringify(state)); } catch(e) {}
   try { localStorage.setItem('timelines_sp_la2028_v1', JSON.stringify(SP_STATUS)); } catch(e) {}
-  showToast('Changes saved ✓');
+  if (GITHUB_CONFIG.token && GITHUB_CONFIG.token !== 'YOUR_GITHUB_PAT_HERE') {
+    updateSyncStatus('saving');
+    try {
+      await saveToGitHub({ items: state, spStatus: SP_STATUS });
+      updateSyncStatus('synced');
+      showToast('Saved & synced ✓');
+    } catch(e) {
+      console.error('GitHub save error:', e);
+      updateSyncStatus('error');
+      showToast('Saved locally — GitHub sync failed');
+    }
+  } else {
+    showToast('Changes saved ✓');
+  }
 }
 
 function confirmReset() {
   if (!confirm('Reset ALL timelines and service provider data back to original?\n\nThis cannot be reversed.')) return;
   try { localStorage.removeItem('timelines_la2028_v2'); localStorage.removeItem('timelines_sp_la2028_v1'); } catch(e) {}
   location.reload();
+}
+
+/* ─── GITHUB SYNC HELPERS ─── */
+function updateSyncStatus(status) {
+  const pill  = document.getElementById('syncPill');
+  const label = document.getElementById('syncLabel');
+  if (!pill || !label) return;
+  const states = { idle:'Not configured', syncing:'Loading…', saving:'Saving…', synced:'Synced ✓', error:'Sync error ⚠' };
+  pill.className = 'sync-pill ' + status;
+  label.textContent = states[status] || status;
+}
+
+async function loadFromGitHub() {
+  if (!GITHUB_CONFIG.token || GITHUB_CONFIG.token === 'YOUR_GITHUB_PAT_HERE') {
+    updateSyncStatus('idle'); return;
+  }
+  updateSyncStatus('syncing');
+  try {
+    const url = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/${GITHUB_CONFIG.path}?_=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) { updateSyncStatus('error'); return; }
+    const data = await res.json();
+    let changed = false;
+    if (data.items)    { DEPTS.forEach(d => { if (data.items[d.id]) { d.items = data.items[d.id]; changed = true; } }); }
+    if (data.spStatus) { Object.assign(SP_STATUS, data.spStatus); changed = true; }
+    if (changed) {
+      renderItems(activeTabId);
+      renderSpSummary(activeTabId);
+      const s = {}; DEPTS.forEach(d => { s[d.id] = d.items; });
+      try { localStorage.setItem('timelines_la2028_v2', JSON.stringify(s)); } catch(e) {}
+      try { localStorage.setItem('timelines_sp_la2028_v1', JSON.stringify(SP_STATUS)); } catch(e) {}
+    }
+    updateSyncStatus('synced');
+  } catch(e) {
+    console.error('GitHub load error:', e);
+    updateSyncStatus('error');
+  }
+}
+
+async function saveToGitHub(payload) {
+  const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+  const headers = { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
+  // Fetch existing SHA so we can update the file (required by GitHub API)
+  let sha = null;
+  try {
+    const r = await fetch(apiUrl, { headers });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch(e) {}
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+  const body = { message: `sync ${new Date().toISOString().slice(0,16)}`, content, branch: GITHUB_CONFIG.branch };
+  if (sha) body.sha = sha;
+  const put = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
+  if (!put.ok) throw new Error(`GitHub API ${put.status}`);
+}
+
+async function syncNow() {
+  await loadFromGitHub();
+  if (GITHUB_CONFIG.token && GITHUB_CONFIG.token !== 'YOUR_GITHUB_PAT_HERE') showToast('Pulled latest from GitHub ✓');
 }
 
 /* ─── SP STATUS HELPERS ─── */
@@ -912,6 +1028,17 @@ function exportState() {
 }
 
 /* ─── PASSWORD ─── */
+/* ─── AUTO-SETUP FROM ?setup= URL PARAM ─── */
+(function autoSetup() {
+  try {
+    const p = new URLSearchParams(window.location.search).get('setup');
+    if (p && (p.startsWith('github_pat_') || p.startsWith('ghp_'))) {
+      localStorage.setItem('gh_pat', p);
+      history.replaceState(null, '', window.location.pathname); // strip token from URL bar
+    }
+  } catch(e) {}
+})();
+
 (function initAuth() {
   if (sessionStorage.getItem('tl_auth') === '1') {
     document.getElementById('pwOverlay').classList.add('hidden');
@@ -941,8 +1068,51 @@ function checkPassword() {
   }
 }
 
+/* ─── PAT SETUP MODAL ─── */
+function openPatModal() {
+  const el = document.getElementById('patModal');
+  el.style.display = 'flex';
+  const inp = document.getElementById('patInput');
+  const existing = localStorage.getItem('gh_pat') || '';
+  inp.value = existing ? '••••••••••••••••' : '';
+  document.getElementById('patError').textContent = '';
+  // Show share link section if token is already configured
+  const shareRow = document.getElementById('patShareRow');
+  if (existing) {
+    const base = window.location.origin + window.location.pathname;
+    document.getElementById('patShareLink').value = `${base}?setup=${existing}`;
+    shareRow.style.display = 'block';
+  } else {
+    shareRow.style.display = 'none';
+  }
+}
+function closePatModal() { document.getElementById('patModal').style.display = 'none'; }
+function clearPat() {
+  localStorage.removeItem('gh_pat');
+  document.getElementById('patInput').value = '';
+  document.getElementById('patError').style.color = '#6B7280';
+  document.getElementById('patError').textContent = 'Token cleared.';
+  document.getElementById('patShareRow').style.display = 'none';
+  updateSyncStatus('idle');
+}
+async function savePat() {
+  const val = document.getElementById('patInput').value.trim();
+  const err = document.getElementById('patError');
+  if (!val || val.startsWith('•')) { err.textContent = 'Please enter your token.'; return; }
+  if (!val.startsWith('github_pat_') && !val.startsWith('ghp_')) { err.textContent = 'That doesn\'t look like a GitHub token (should start with github_pat_ or ghp_).'; return; }
+  localStorage.setItem('gh_pat', val);
+  closePatModal();
+  await loadFromGitHub();
+}
+function copySetupLink() {
+  const inp = document.getElementById('patShareLink');
+  inp.select();
+  navigator.clipboard.writeText(inp.value).then(() => showToast('Setup link copied ✓ — send it to your team'));
+}
+
 /* ─── INIT ─── */
 switchTab('cyber');
+loadFromGitHub();
 </script>
 </body>
 </html>

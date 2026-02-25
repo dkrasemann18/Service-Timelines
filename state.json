@@ -4,9 +4,15 @@
       "Q2-2026": [
         "Secure Instant Messaging",
         "Data Loss Prevention",
-        "Secure Data Destruction",
-        "Network Security Monitoring",
-        "SOAR",
+        "Secure Data Destruction"
+      ],
+      "Q4-2026": [
+        "Network Security Monitoring"
+      ],
+      "Q1-2027": [
+        "SOAR"
+      ],
+      "Q2-2027": [
         "Cyber Wargaming"
       ]
     },

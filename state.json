@@ -1,0 +1,317 @@
+{
+  "items": {
+    "cyber": {
+      "Q2-2026": [
+        "Secure Instant Messaging",
+        "Data Loss Prevention"
+      ],
+      "Q3-2026": [
+        "Secure Data Destruction"
+      ],
+      "Q4-2026": [
+        "Network Security Monitoring"
+      ],
+      "Q1-2027": [
+        "SOAR"
+      ],
+      "Q2-2027": [
+        "Cyber Wargaming"
+      ]
+    },
+    "applications": {
+      "Q2-2026": [
+        "Games Time Mobile Application",
+        "Sport Publications",
+        "Ticketing Platform (Eventin/AXS)",
+        "Warehouse Management System",
+        "Vehicle Access Pass Management",
+        "LA Works Volunteer Ingestion",
+        "ADS – Arrivals & Departures",
+        "OMB – Olympic Message Bus (Production)"
+      ],
+      "Q3-2026": [
+        "Official Games Website",
+        "FAN Chatbot",
+        "Signage Database",
+        "Fleet, Bus & Ground Staff Management",
+        "Volunteer Management",
+        "Translation Management System",
+        "ORP – Report Distribution (Production)",
+        "Athlete Mobile Application",
+        "Workforce Call Centre",
+        "Procurement & Contracting Support Queue"
+      ],
+      "Q4-2026": [
+        "Main Stakeholder Application",
+        "Protocol System",
+        "Event Vendor & Space Management",
+        "Anti-Doping Administration & Management System (ADAMS)",
+        "Lost & Found",
+        "VisaLink",
+        "WKP – Workforce Portal",
+        "Athlete Biographies",
+        "CIS – Commentator Information System (Production)",
+        "Electronic Medical Record (EMR) System",
+        "Health & Safety Incident Management"
+      ],
+      "Q1-2027": [
+        "Design and Copy Proofing Tool",
+        "Torch Relay Management System",
+        "Games Cooperation Extranet",
+        "MED Finder",
+        "Overlay Space Management",
+        "WKS – Scheduling and Rostering",
+        "Athletes Achievements",
+        "WMR – Web and Mobile Results (Production)",
+        "VOT – eVote",
+        "Weather Data Distribution"
+      ],
+      "Q2-2027": [
+        "Pre-Games Training Sites Map",
+        "Ceremonies Volunteers Management Portal",
+        "Games Energy Council (GEC)",
+        "Gamestime Learning Management System",
+        "Work Order System",
+        "ACS – Access Control (Production)",
+        "SVP-SRC – Rate Card",
+        "Olympic Data Feed"
+      ],
+      "Q3-2027": [
+        "Laundry Service Management System",
+        "Chefs de Mission Registration System",
+        "Games Learning",
+        "Control Room Dashboard",
+        "Meal Voucher System",
+        "ACR – Accreditation",
+        "MDZ – MediaZone (Production)",
+        "Common Codes"
+      ],
+      "Q4-2027": [
+        "Village Work Order Management System",
+        "Cultural Events System",
+        "Games Logistics Services (GLS)",
+        "Driver Navigation App",
+        "Training Venue Booking Service",
+        "ASM – Schedule Management",
+        "On Screen Results Presentation (OSRP)"
+      ],
+      "Q1-2028": [
+        "Diploma and Certificate",
+        "Press Ops Extranet",
+        "Journey Planning / Wayfinding",
+        "Venue Handover & Handback",
+        "SBP – Spectrum Booking Portal",
+        "ODV – Olympic Data Feed Validator (Production)"
+      ],
+      "Q2-2028": [
+        "Games Experience",
+        "Hospitality Platform (OnLocation)",
+        "Venues Database",
+        "On Demand Rides App",
+        "SEQ – Sport Entries and Qualifications",
+        "ODF Documentation Management"
+      ],
+      "Games-Time": [
+        "Info Inbox Queue",
+        "Master Delivery Schedule",
+        "Transportation Management",
+        "Simultaneous Remote Interpretation System",
+        "Accessibility Compliance Service",
+        "Validation Engine"
+      ]
+    },
+    "pm": {
+      "Q1-2027": [
+        "Shift Management"
+      ],
+      "Q3-2027": [
+        "Technology Rehearsals"
+      ],
+      "Q4-2027": [
+        "MOC Issue Management"
+      ]
+    },
+    "results": {
+      "Q3-2026": [
+        "Weather Data Project",
+        "Results TV Graphics",
+        "Olympic Data Feed",
+        "Video Adjudication System"
+      ],
+      "Q4-2026": [
+        "Athletes Headshot Pictures",
+        "Sports Specific Scoreboard",
+        "Olympic Results and Information Services (ORIS)",
+        "Athletes Name Pronunciation Audio"
+      ],
+      "Q1-2027": [
+        "Paralympic Results and Information Services (PRIS)",
+        "Athletes Records"
+      ],
+      "Q2-2027": [
+        "Medal Presenter Application",
+        "Results Integration",
+        "Results Operations"
+      ],
+      "Q3-2027": [
+        "ODF Photo Finish Diffusion",
+        "Results Programme Management"
+      ],
+      "Q4-2027": [
+        "ODF Receiver",
+        "IF Results Requirements"
+      ],
+      "Q1-2028": [
+        "Enhanced Results TV Graphics Services",
+        "Timing & Scoring Systems (T&S)",
+        "Public Scoreboard Feed (SPS)"
+      ],
+      "Q2-2028": [
+        "On-Venue Results Systems (OVR)",
+        "Public Scoreboard Screen (PSCB)"
+      ],
+      "Games-Time": [
+        "Real Time Display System (RTDS)"
+      ]
+    },
+    "sd": {
+      "Q1-2026": [
+        "Central Service Desk"
+      ],
+      "Q2-2026": [
+        "OTT Streaming Services",
+        "Video Conference Equipment",
+        "Enterprise Resource Planning"
+      ],
+      "Q3-2026": [
+        "Device & Accessories",
+        "Venue Service Desk"
+      ],
+      "Q4-2026": [
+        "Google Cloud Platform",
+        "Asset Management System"
+      ],
+      "Q1-2027": [
+        "Amazon Web Services",
+        "Configuration Management"
+      ],
+      "Q2-2027": [
+        "Printing Services",
+        "Finished Product Catalogue"
+      ],
+      "Q3-2027": [
+        "Shipping & Courier Services",
+        "Release Management"
+      ],
+      "Q4-2027": [
+        "Video Conferencing System"
+      ],
+      "Q1-2028": [
+        "Video Conference Equipment (Delivery)"
+      ]
+    },
+    "telecom": {
+      "Q1-2026": [
+        "Communications Systems"
+      ],
+      "Q2-2026": [
+        "Telecom – In-Venue HBCD service",
+        "Telecom – Technology Rate Card",
+        "Telecom – IP-WAN",
+        "Telecom – Network Security Tools & Controls",
+        "Telecom – Wireless WAN Link",
+        "Telecom – Inter-Venue HBCD service",
+        "Telecom – Inter-Venue HBCD OTT services (tbd)"
+      ],
+      "Q3-2026": [
+        "Telecom – BC-WAN (DF)",
+        "Telecom – BC-WAN (LF) Local Venue",
+        "Telecom – BC-WAN (LF) Remote Venue",
+        "Telecom – Competition Copy"
+      ],
+      "Q4-2026": [
+        "Telecom – Remote ITP Wired",
+        "Telecom – Venue IP Telephone",
+        "Telecom – Conference Phone (tbd)"
+      ],
+      "Q1-2027": [
+        "Telecom – Venue WLAN (Wi-Fi)",
+        "Telecom – Venue LAN Wired",
+        "Telecom – Venue LAN Wired DIA",
+        "Telecom – Athlete Mobile Phone"
+      ],
+      "Q2-2027": [
+        "Telecom – Venue Existing WLAN (Wi-Fi)",
+        "Telecom – Venue Existing LAN Wired",
+        "Telecom – Workforce Mobile Phone",
+        "Telecom – Voice & Data eSIM only",
+        "Telecom – Workforce Mobile Phone Voice Only (tbd)",
+        "Telecom – Data eSIM only – Pre-Games",
+        "Telecom – Mobile Network"
+      ],
+      "Q3-2027": [
+        "Telecom – Press Plus Private Network",
+        "Telecom – Press Plus Private Network + DIA",
+        "Telecom – Private 5G App-Specific Mobile (Data only)",
+        "Telecom – Private 5G mobile devices",
+        "Telecom – Private 5G Data eSIM only",
+        "Telecom – Private 5G Workforce Mobile Phone (tbd)",
+        "Telecom – Private 5G Voice & Data eSIM only (tbd)",
+        "Telecom – Private 5G Mobile Network"
+      ],
+      "Q4-2027": [
+        "Telecom – Competition Network",
+        "Telecom – Press Plus 5G"
+      ],
+      "Q1-2028": [
+        "Telecom – Security NAC CP Guest",
+        "Telecom – Security NAC CP ACR",
+        "Telecom – Security NAC MARP",
+        "Telecom – Security NAC Cert",
+        "Telecom – Private Push to Talk (PPTT) devices",
+        "Telecom – Private Push to Talk (PPTT) Network"
+      ],
+      "Q2-2028": [
+        "Telecom – Venue DIVA Network",
+        "Telecom – Satellite Phones (tbd)"
+      ],
+      "Games-Time": [
+        "Telecom – Venue Intercom services",
+        "Telecom – Spectrum Booking Portal",
+        "Telecom – Frequency Allocation & Licensing",
+        "Telecom – Testing and Tagging",
+        "Telecom – Spectrum Interference Monitoring"
+      ]
+    },
+    "venuetech": {
+      "Q2-2026": [
+        "Energy Management Tool",
+        "RF & Wireless Systems",
+        "Sport AV"
+      ],
+      "Q3-2026": [
+        "Technology Equipment Allocation Process",
+        "Daily Run Sheet (DRS) Planning & Management Tool"
+      ],
+      "Q4-2026": [
+        "Video Control Systems"
+      ],
+      "Q1-2027": [
+        "Audio Systems"
+      ],
+      "Q2-2027": [
+        "Conferencing Systems"
+      ],
+      "Q3-2027": [
+        "Display & Visual Systems"
+      ],
+      "Q2-2028": [
+        "Interpretation Services"
+      ]
+    }
+  },
+  "spStatus": {
+    "cyber::Q2-2026::Data Loss Prevention": "unknown",
+    "cyber::Q2-2026::Secure Instant Messaging": "yes"
+  }
+}

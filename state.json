@@ -2,11 +2,11 @@
   "items": {
     "cyber": {
       "Q2-2026": [
-        "Secure Instant Messaging"
+        "Secure Instant Messaging",
+        "Data Loss Prevention"
       ],
       "Q3-2026": [
-        "Secure Data Destruction",
-        "Data Loss Prevention"
+        "Secure Data Destruction"
       ],
       "Q4-2026": [
         "Network Security Monitoring"
@@ -311,7 +311,7 @@
     }
   },
   "spStatus": {
-    "cyber::Q2-2026::Secure Instant Messaging": "yes",
-    "cyber::Q3-2026::Data Loss Prevention": "yes"
+    "cyber::Q2-2026::Data Loss Prevention": "unknown",
+    "cyber::Q2-2026::Secure Instant Messaging": "yes"
   }
 }

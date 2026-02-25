@@ -312,6 +312,6 @@
   },
   "spStatus": {
     "cyber::Q2-2026::Data Loss Prevention": "unknown",
-    "cyber::Q2-2026::Secure Instant Messaging": "yes"
+    "cyber::Q2-2026::Secure Instant Messaging": "unknown"
   }
 }

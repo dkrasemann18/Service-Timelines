@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Non-Operational Services Timelines</title>
+<style>
+  :root {
+    --bg: #F0F2F5;
+    --surface: #fff;
+    --border: #DDE3ED;
+    --text: #1A2340;
+    --muted: #6B7280;
+    --gold: #D97706;
+    --gold-bg: #FFFBEA;
+    --col-w: 160px;
+    --radius: 8px;
+    /* SP status colours */
+    --sp-uk-bg:   #F3F4F6; --sp-uk-text:  #374151; --sp-uk-bdr:  #D1D5DB; --sp-uk-dot: #9CA3AF;
+    --sp-yes-bg:  #DCFCE7; --sp-yes-text: #166534; --sp-yes-bdr: #86EFAC; --sp-yes-dot: #16A34A;
+    --sp-no-bg:   #FEE2E2; --sp-no-text:  #991B1B; --sp-no-bdr:  #FECACA; --sp-no-dot:  #DC2626;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ═══ HEADER ═══ */
+  .app-header { position: sticky; top: 0; z-index: 200; background: #1A2340; box-shadow: 0 2px 20px rgba(0,0,0,0.25); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 14px 24px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo h1 { font-size: 1.05rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; white-space: nowrap; }
+  .logo-badge { background: #D97706; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .search-box { position: relative; }
+  .search-box input { width: 240px; padding: 8px 32px 8px 34px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 0.82rem; outline: none; transition: background 0.2s; }
+  .search-box input::placeholder { color: rgba(255,255,255,0.38); }
+  .search-box input:focus { background: rgba(255,255,255,0.18); }
+  .search-box::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; pointer-events: none; }
+  .search-clear { display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.45); font-size: 0.85rem; cursor: pointer; padding: 2px 4px; line-height: 1; }
+  .search-clear.on { display: block; }
+  .hdr-btn { padding: 7px 13px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
+  .hdr-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  .hdr-btn.danger:hover { background: rgba(220,38,38,0.4); border-color: rgba(220,38,38,0.5); color: #fff; }
+
+  /* ═══ TABS ═══ */
+  .tabs { display: flex; padding: 0 24px; border-top: 1px solid rgba(255,255,255,0.07); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; background: none; font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.42); border-bottom: 3px solid transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+  .tab-btn:hover { color: rgba(255,255,255,0.82); }
+  .tab-btn.active { color: #fff; }
+  .tab-icon { font-size: 0.88rem; }
+  .tab-count { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .tab-btn.active .tab-count { background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); }
+
+  /* ═══ MAIN / PANEL ═══ */
+  main { padding: 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadein 0.2s ease; }
+  @keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  .panel-meta { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+  .panel-title-row { display: flex; align-items: center; gap: 10px; }
+  .dept-bar { width: 4px; height: 38px; border-radius: 2px; flex-shrink: 0; }
+  .panel-name { font-size: 1.25rem; font-weight: 800; line-height: 1.2; }
+  .panel-desc { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .stat-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; color: var(--muted); }
+  .stat-pill strong { color: var(--text); font-size: 0.88rem; }
+
+  /* SP summary bar */
+  .sp-summary { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; font-size: 0.75rem; }
+  .sp-summary-label { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  .sp-pill { display: flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-weight: 600; border: 1px solid; cursor: pointer; transition: opacity 0.12s; user-select: none; }
+  .sp-pill:hover { opacity: 0.75; }
+  .sp-pill.uk  { background: var(--sp-uk-bg);  color: var(--sp-uk-text);  border-color: var(--sp-uk-bdr);  }
+  .sp-pill.yes { background: var(--sp-yes-bg); color: var(--sp-yes-text); border-color: var(--sp-yes-bdr); }
+  .sp-pill.no  { background: var(--sp-no-bg);  color: var(--sp-no-text);  border-color: var(--sp-no-bdr);  }
+  .sp-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .sp-summary-legend { margin-left: auto; font-size: 0.68rem; color: var(--muted); font-style: italic; }
+
+  /* filter active indicator */
+  .sp-pill.filter-active { outline: 2px solid currentColor; outline-offset: 1px; }
+
+  .sr-bar { display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.76rem; margin-bottom: 10px; border: 1px solid; }
+  .sr-bar.on { display: block; }
+  .hint { font-size: 0.68rem; color: var(--muted); margin-bottom: 8px; text-align: right; opacity: 0.6; }
+
+  /* ═══ TIMELINE ═══ */
+  .tl-wrap { overflow-x: auto; overflow-y: visible; padding-bottom: 12px; scrollbar-width: thin; scrollbar-color: #C5CDD9 transparent; }
+  .tl-wrap::-webkit-scrollbar { height: 5px; }
+  .tl-wrap::-webkit-scrollbar-thumb { background: #C5CDD9; border-radius: 3px; }
+  .tl-table { display: flex; flex-direction: column; min-width: calc(11 * var(--col-w)); background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+
+  .tl-years { display: grid; grid-template-columns: repeat(11, var(--col-w)); border-bottom: 1px solid var(--border); }
+  .yr-cell { padding: 8px 0 6px; text-align: center; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+  .yr-cell.y2026 { background: #EFF6FF; color: #1D4ED8; border-right: 1px solid #BFDBFE; }
+  .yr-cell.y2027 { background: #F0FDF4; color: #15803D; border-right: 1px solid #BBF7D0; }
+  .yr-cell.y2028 { background: #FEF2F2; color: #B91C1C; border-right: 1px solid #FECACA; }
+  .yr-cell.ygames { background: var(--gold-bg); color: var(--gold); }
+
+  .tl-qtrs { display: grid; grid-template-columns: repeat(11, var(--col-w)); border-bottom: 2px solid var(--border); }
+  .q-cell { padding: 6px 0 8px; text-align: center; font-size: 0.68rem; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; position: relative; }
+  .q-cell::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: #D1D5DB; border-radius: 50%; z-index: 1; }
+  .q-cell.has-items::after { width: 10px; height: 10px; bottom: -7px; }
+  .q-cell.games-q { background: var(--gold-bg); color: var(--gold); font-weight: 800; }
+  .q-cell.games-q::after { background: var(--gold); box-shadow: 0 0 0 3px rgba(217,119,6,0.18); width: 10px; height: 10px; bottom: -7px; }
+
+  .tl-items { display: grid; grid-template-columns: repeat(11, var(--col-w)); align-items: start; }
+  .tl-col { padding: 10px 6px 10px; display: flex; flex-direction: column; gap: 4px; border-right: 1px dashed #EAECF0; min-height: 64px; transition: background 0.1s, outline 0.1s; }
+  .tl-col:last-child { border-right: none; }
+  .tl-col:nth-child(4), .tl-col:nth-child(8), .tl-col:nth-child(10) { border-right: 2px solid var(--border); }
+  .tl-col.games-col { background: var(--gold-bg); border-right: none; }
+  .tl-col.empty { background: repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(0,0,0,0.013) 7px,rgba(0,0,0,0.013) 14px); }
+  .tl-col.empty.games-col { background: var(--gold-bg); }
+  .tl-col.drag-over { outline: 2px dashed #6366F1; outline-offset: -2px; background: rgba(99,102,241,0.07) !important; border-radius: 6px; }
+  /* SP filter dim */
+  .tl-col.sp-filtered .chip:not(.sp-show) { opacity: 0.1; pointer-events: none; }
+
+  /* ═══ CHIPS ═══ */
+  .chip {
+    position: relative;
+    padding: 5px 38px 5px 8px; /* right padding: room for sp-badge + del */
+    border-radius: 6px;
+    font-size: 0.665rem; font-weight: 500; line-height: 1.4;
+    border: 1px solid transparent;
+    cursor: grab; user-select: none;
+    transition: transform 0.1s, box-shadow 0.12s, opacity 0.15s;
+    word-break: break-word; hyphens: auto;
+  }
+  .chip:hover { transform: translateY(-1px); box-shadow: 0 3px 14px rgba(0,0,0,0.13); z-index: 10; }
+  .chip:active { cursor: grabbing; }
+  .chip.dragging { opacity: 0.3; transform: scale(0.95); }
+  .chip.dim { opacity: 0.1; }
+  .chip.match { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px #6366F1; z-index: 8; transform: translateY(-1px); }
+
+  /* SP status colours on chip */
+  .chip[data-sp="unknown"] { background: var(--sp-uk-bg);  color: var(--sp-uk-text);  border-color: var(--sp-uk-bdr);  }
+  .chip[data-sp="yes"]     { background: var(--sp-yes-bg); color: var(--sp-yes-text); border-color: var(--sp-yes-bdr); }
+  .chip[data-sp="no"]      { background: var(--sp-no-bg);  color: var(--sp-no-text);  border-color: var(--sp-no-bdr);  }
+
+  /* SP badge (always visible) */
+  .sp-badge {
+    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.58rem; font-weight: 900; line-height: 1;
+    cursor: pointer; z-index: 3;
+    transition: transform 0.1s, box-shadow 0.1s;
+    border: 1.5px solid rgba(255,255,255,0.6);
+  }
+  .sp-badge:hover { transform: translateY(-50%) scale(1.2); box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
+  .chip[data-sp="unknown"] .sp-badge { background: var(--sp-uk-dot);  color: #fff; }
+  .chip[data-sp="yes"]     .sp-badge { background: var(--sp-yes-dot); color: #fff; }
+  .chip[data-sp="no"]      .sp-badge { background: var(--sp-no-dot);  color: #fff; }
+
+  /* Delete button (hover only) */
+  .chip-del {
+    position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700; line-height: 1;
+    cursor: pointer; z-index: 4;
+    opacity: 0; background: rgba(0,0,0,0.12); color: currentColor;
+    transition: opacity 0.12s, background 0.1s;
+  }
+  .chip:hover .chip-del { opacity: 1; }
+  .chip-del:hover { background: rgba(220,38,38,0.7) !important; color: #fff !important; }
+
+  /* ═══ ADD BUTTON & INPUT ═══ */
+  .add-btn { align-self: flex-start; padding: 3px 10px; border-radius: 5px; border: 1px dashed #C9D0DC; background: none; color: #9CA3AF; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: border-color 0.12s, color 0.12s, background 0.12s; width: 100%; margin-top: 2px; }
+  .add-btn:hover { border-color: #6366F1; color: #6366F1; background: rgba(99,102,241,0.05); }
+  .games-col .add-btn { border-color: #F5D978; color: #B45309; }
+  .games-col .add-btn:hover { border-color: #D97706; color: #D97706; background: rgba(217,119,6,0.06); }
+  .add-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .add-input { width: 100%; padding: 4px 7px; border-radius: 5px; border: 1px solid #6366F1; outline: none; font-size: 0.67rem; background: #F5F3FF; color: var(--text); }
+  .add-actions { display: flex; gap: 4px; }
+  .add-ok, .add-cancel { flex: 1; padding: 3px 0; border-radius: 4px; border: none; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+  .add-ok { background: #6366F1; color: #fff; } .add-ok:hover { background: #4F46E5; }
+  .add-cancel { background: #E5E7EB; color: #6B7280; } .add-cancel:hover { background: #D1D5DB; }
+
+  /* ═══ SP POPOVER ═══ */
+  .sp-popover {
+    display: none; position: fixed; z-index: 1000;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px; width: 215px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.16);
+  }
+  .sp-popover.open { display: block; }
+  .sp-pop-title { font-size: 0.67rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .sp-opt {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 7px 10px; border: none; border-radius: 6px;
+    background: none; cursor: pointer; font-size: 0.78rem; font-weight: 500;
+    text-align: left; transition: background 0.1s; margin-bottom: 2px;
+  }
+  .sp-opt:last-child { margin-bottom: 0; }
+  .sp-opt:hover { background: var(--bg); }
+  .sp-opt.active { font-weight: 700; }
+  .sp-opt .opt-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .sp-opt .opt-check { margin-left: auto; font-size: 0.75rem; opacity: 0; }
+  .sp-opt.active .opt-check { opacity: 1; }
+  .sp-opt-uk  { color: var(--sp-uk-text);  } .sp-opt-uk  .opt-dot { background: var(--sp-uk-dot);  }
+  .sp-opt-yes { color: var(--sp-yes-text); } .sp-opt-yes .opt-dot { background: var(--sp-yes-dot); }
+  .sp-opt-no  { color: var(--sp-no-text);  } .sp-opt-no  .opt-dot { background: var(--sp-no-dot);  }
+
+  /* ═══ MODAL ═══ */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.on { display: flex; }
+  .modal { background: var(--surface); border-radius: 12px; padding: 24px; width: 380px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
+  .modal label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  .modal input, .modal select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 0.85rem; color: var(--text); outline: none; background: var(--bg); margin-bottom: 12px; }
+  .modal input:focus, .modal select:focus { border-color: #6366F1; background: #F5F3FF; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .modal-btn { padding: 8px 18px; border-radius: 7px; border: none; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+  .modal-btn.primary { background: #1D4ED8; color: #fff; } .modal-btn.primary:hover { background: #1E40AF; }
+  .modal-btn.secondary { background: #E5E7EB; color: #374151; } .modal-btn.secondary:hover { background: #D1D5DB; }
+
+  /* ═══ PASSWORD OVERLAY ═══ */
+  .pw-overlay { position: fixed; inset: 0; z-index: 9999; background: #1A2340; display: flex; align-items: center; justify-content: center; }
+  .pw-overlay.hidden { display: none; }
+  .pw-box { background: #fff; border-radius: 14px; padding: 40px 36px; width: 340px; max-width: 90vw; box-shadow: 0 24px 80px rgba(0,0,0,0.4); text-align: center; }
+  .pw-logo { font-size: 2rem; margin-bottom: 14px; }
+  .pw-box h2 { font-size: 1.1rem; font-weight: 700; color: #1A2340; margin-bottom: 4px; }
+  .pw-box p { font-size: 0.8rem; color: #6B7280; margin-bottom: 24px; }
+  .pw-input { width: 100%; padding: 11px 14px; border: 1.5px solid #DDE3ED; border-radius: 8px; font-size: 0.95rem; color: #1A2340; outline: none; transition: border-color 0.15s; text-align: center; letter-spacing: 0.08em; }
+  .pw-input:focus { border-color: #1A2340; }
+  .pw-input.shake { animation: shake 0.35s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} 80%{transform:translateX(-4px)} }
+  .pw-btn { margin-top: 12px; width: 100%; padding: 11px; background: #1A2340; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .pw-btn:hover { background: #243260; }
+  .pw-error { margin-top: 10px; font-size: 0.75rem; color: #DC2626; min-height: 18px; }
+
+  /* ═══ TOAST ═══ */
+  .toast { position: fixed; bottom: 24px; right: 24px; z-index: 600; background: #1A2340; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.2); opacity: 0; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Password overlay -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box">
+    <div class="pw-logo">🔒</div>
+    <h2>Non-Operational Services Timelines</h2>
+    <p>Enter the password to continue</p>
+    <input class="pw-input" type="password" id="pwInput" placeholder="Password" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="pw-btn" id="pwBtn">Continue</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="header-top">
+    <div class="logo">
+      <h1>Non-Operational Services Timelines</h1>
+    </div>
+    <div class="header-actions">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search deliverables…" autocomplete="off" spellcheck="false">
+        <button class="search-clear" id="searchClear">✕</button>
+      </div>
+      <button class="hdr-btn" onclick="exportState()" title="Export a self-contained HTML file to share with your team">⬇ Export to share</button>
+      <button class="hdr-btn" onclick="openAddModal()">＋ Add Deliverable</button>
+      <button class="hdr-btn danger" onclick="confirmReset()">↺ Reset</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabNav"></nav>
+</header>
+
+<main id="mainContent"></main>
+
+<!-- Add modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>Add New Deliverable</h3>
+    <label>Department</label>
+    <select id="modalDept"></select>
+    <label>Quarter</label>
+    <select id="modalQtr"></select>
+    <label>Deliverable Name</label>
+    <input type="text" id="modalName" placeholder="e.g. Network Access Control System" autocomplete="off">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeAddModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="submitAddModal()">Add Deliverable</button>
+    </div>
+  </div>
+</div>
+
+<!-- SP status popover (single global instance) -->
+<div class="sp-popover" id="spPopover">
+  <div class="sp-pop-title">Service Provider</div>
+  <button class="sp-opt sp-opt-yes" data-status="yes">
+    <span class="opt-dot"></span> Existing SP <span class="opt-check">✓</span>
+  </button>
+  <button class="sp-opt sp-opt-no" data-status="no">
+    <span class="opt-dot"></span> New SP <span class="opt-check">✓</span>
+  </button>
+  <button class="sp-opt sp-opt-uk" data-status="unknown">
+    <span class="opt-dot"></span> Not yet determined <span class="opt-check">✓</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── QUARTERS / YEARS ─── */
+const QUARTERS = [
+  {key:'Q1-2026', short:'Q1', yCls:'y2026'},
+  {key:'Q2-2026', short:'Q2', yCls:'y2026'},
+  {key:'Q3-2026', short:'Q3', yCls:'y2026'},
+  {key:'Q4-2026', short:'Q4', yCls:'y2026'},
+  {key:'Q1-2027', short:'Q1', yCls:'y2027'},
+  {key:'Q2-2027', short:'Q2', yCls:'y2027'},
+  {key:'Q3-2027', short:'Q3', yCls:'y2027'},
+  {key:'Q4-2027', short:'Q4', yCls:'y2027'},
+  {key:'Q1-2028', short:'Q1', yCls:'y2028'},
+  {key:'Q2-2028', short:'Q2', yCls:'y2028'},
+  {key:'Games-Time', short:'Games', yCls:'ygames'},
+];
+const YEAR_SPANS = [
+  {label:'2026', span:4, cls:'y2026'},
+  {label:'2027', span:4, cls:'y2027'},
+  {label:'2028', span:2, cls:'y2028'},
+  {label:'🏅 Games-Time', span:1, cls:'ygames'},
+];
+
+/* ─── DEFAULT ITEM DATA ─── */
+const DEFAULTS = {
+  cyber: {
+    'Q2-2026':['Secure Instant Messaging','Data Loss Prevention'],
+    'Q3-2026':['Secure Data Destruction'],
+    'Q4-2026':['Network Security Monitoring'],
+    'Q1-2027':['SOAR'],
+    'Q2-2027':['Cyber Wargaming'],
+  },
+  applications: {
+    'Q2-2026':['Games Time Mobile Application','Sport Publications','Ticketing Platform (Eventin/AXS)','Warehouse Management System','Vehicle Access Pass Management','LA Works Volunteer Ingestion','ADS – Arrivals & Departures','OMB – Olympic Message Bus (Production)'],
+    'Q3-2026':['Official Games Website','FAN Chatbot','Signage Database','Fleet, Bus & Ground Staff Management','Volunteer Management','Translation Management System','ORP – Report Distribution (Production)','Athlete Mobile Application','Workforce Call Centre','Procurement & Contracting Support Queue'],
+    'Q4-2026':['Main Stakeholder Application','Protocol System','Event Vendor & Space Management','Anti-Doping Administration & Management System (ADAMS)','Lost & Found','VisaLink','WKP – Workforce Portal','Athlete Biographies','CIS – Commentator Information System (Production)','Electronic Medical Record (EMR) System','Health & Safety Incident Management'],
+    'Q1-2027':['Design and Copy Proofing Tool','Torch Relay Management System','Games Cooperation Extranet','MED Finder','Overlay Space Management','WKS – Scheduling and Rostering','Athletes Achievements','WMR – Web and Mobile Results (Production)','VOT – eVote','Weather Data Distribution'],
+    'Q2-2027':['Pre-Games Training Sites Map','Ceremonies Volunteers Management Portal','Games Energy Council (GEC)','Gamestime Learning Management System','Work Order System','ACS – Access Control (Production)','SVP-SRC – Rate Card','Olympic Data Feed'],
+    'Q3-2027':['Laundry Service Management System','Chefs de Mission Registration System','Games Learning','Control Room Dashboard','Meal Voucher System','ACR – Accreditation','MDZ – MediaZone (Production)','Common Codes'],
+    'Q4-2027':['Village Work Order Management System','Cultural Events System','Games Logistics Services (GLS)','Driver Navigation App','Training Venue Booking Service','ASM – Schedule Management','On Screen Results Presentation (OSRP)'],
+    'Q1-2028':['Diploma and Certificate','Press Ops Extranet','Journey Planning / Wayfinding','Venue Handover & Handback','SBP – Spectrum Booking Portal','ODV – Olympic Data Feed Validator (Production)'],
+    'Q2-2028':['Games Experience','Hospitality Platform (OnLocation)','Venues Database','On Demand Rides App','SEQ – Sport Entries and Qualifications','ODF Documentation Management'],
+    'Games-Time':['Info Inbox Queue','Master Delivery Schedule','Transportation Management','Simultaneous Remote Interpretation System','Accessibility Compliance Service','Validation Engine'],
+  },
+  pm: {
+    'Q1-2027':['Shift Management'],
+    'Q3-2027':['Technology Rehearsals'],
+    'Q4-2027':['MOC Issue Management'],
+  },
+  results: {
+    'Q3-2026':['Weather Data Project','Results TV Graphics','Olympic Data Feed','Video Adjudication System'],
+    'Q4-2026':['Athletes Headshot Pictures','Sports Specific Scoreboard','Olympic Results and Information Services (ORIS)','Athletes Name Pronunciation Audio'],
+    'Q1-2027':['Paralympic Results and Information Services (PRIS)','Athletes Records'],
+    'Q2-2027':['Medal Presenter Application','Results Integration','Results Operations'],
+    'Q3-2027':['ODF Photo Finish Diffusion','Results Programme Management'],
+    'Q4-2027':['ODF Receiver','IF Results Requirements'],
+    'Q1-2028':['Enhanced Results TV Graphics Services','Timing & Scoring Systems (T&S)','Public Scoreboard Feed (SPS)'],
+    'Q2-2028':['On-Venue Results Systems (OVR)','Public Scoreboard Screen (PSCB)'],
+    'Games-Time':['Real Time Display System (RTDS)'],
+  },
+  sd: {
+    'Q1-2026':['Central Service Desk'],
+    'Q2-2026':['OTT Streaming Services','Video Conference Equipment','Enterprise Resource Planning'],
+    'Q3-2026':['Device & Accessories','Venue Service Desk'],
+    'Q4-2026':['Google Cloud Platform','Asset Management System'],
+    'Q1-2027':['Amazon Web Services','Configuration Management'],
+    'Q2-2027':['Printing Services','Finished Product Catalogue'],
+    'Q3-2027':['Shipping & Courier Services','Release Management'],
+    'Q4-2027':['Video Conferencing System'],
+    'Q1-2028':['Video Conference Equipment (Delivery)'],
+  },
+  telecom: {
+    'Q1-2026':['Communications Systems'],
+    'Q2-2026':['Telecom – In-Venue HBCD service','Telecom – Technology Rate Card','Telecom – IP-WAN','Telecom – Network Security Tools & Controls','Telecom – Wireless WAN Link','Telecom – Inter-Venue HBCD service','Telecom – Inter-Venue HBCD OTT services (tbd)'],
+    'Q3-2026':['Telecom – BC-WAN (DF)','Telecom – BC-WAN (LF) Local Venue','Telecom – BC-WAN (LF) Remote Venue','Telecom – Competition Copy'],
+    'Q4-2026':['Telecom – Remote ITP Wired','Telecom – Venue IP Telephone','Telecom – Conference Phone (tbd)'],
+    'Q1-2027':['Telecom – Venue WLAN (Wi-Fi)','Telecom – Venue LAN Wired','Telecom – Venue LAN Wired DIA','Telecom – Athlete Mobile Phone'],
+    'Q2-2027':['Telecom – Venue Existing WLAN (Wi-Fi)','Telecom – Venue Existing LAN Wired','Telecom – Workforce Mobile Phone','Telecom – Voice & Data eSIM only','Telecom – Workforce Mobile Phone Voice Only (tbd)','Telecom – Data eSIM only – Pre-Games','Telecom – Mobile Network'],
+    'Q3-2027':['Telecom – Press Plus Private Network','Telecom – Press Plus Private Network + DIA','Telecom – Private 5G App-Specific Mobile (Data only)','Telecom – Private 5G mobile devices','Telecom – Private 5G Data eSIM only','Telecom – Private 5G Workforce Mobile Phone (tbd)','Telecom – Private 5G Voice & Data eSIM only (tbd)','Telecom – Private 5G Mobile Network'],
+    'Q4-2027':['Telecom – Competition Network','Telecom – Press Plus 5G'],
+    'Q1-2028':['Telecom – Security NAC CP Guest','Telecom – Security NAC CP ACR','Telecom – Security NAC MARP','Telecom – Security NAC Cert','Telecom – Private Push to Talk (PPTT) devices','Telecom – Private Push to Talk (PPTT) Network'],
+    'Q2-2028':['Telecom – Venue DIVA Network','Telecom – Satellite Phones (tbd)'],
+    'Games-Time':['Telecom – Venue Intercom services','Telecom – Spectrum Booking Portal','Telecom – Frequency Allocation & Licensing','Telecom – Testing and Tagging','Telecom – Spectrum Interference Monitoring'],
+  },
+  venuetech: {
+    'Q2-2026':['Energy Management Tool','RF & Wireless Systems','Sport AV'],
+    'Q3-2026':['Technology Equipment Allocation Process','Daily Run Sheet (DRS) Planning & Management Tool'],
+    'Q4-2026':['Video Control Systems'],
+    'Q1-2027':['Audio Systems'],
+    'Q2-2027':['Conferencing Systems'],
+    'Q3-2027':['Display & Visual Systems'],
+    'Q2-2028':['Interpretation Services'],
+  },
+};
+
+/* ─── DEPT CONFIG ─── */
+const DEPTS = [
+  {id:'cyber',       name:'Cyber',        fullName:'Cyber',             icon:'🛡️', color:'#B91C1C', desc:'Cybersecurity deliverables & tools'},
+  {id:'applications',name:'Applications', fullName:'Applications',      icon:'💻', color:'#1D4ED8', desc:'Software applications & digital platforms'},
+  {id:'pm',          name:'PM',           fullName:'Project Management', icon:'📋', color:'#15803D', desc:'Programme & project management tools'},
+  {id:'results',     name:'Results',      fullName:'Results',            icon:'🏅', color:'#B45309', desc:'Results, scoring & information services'},
+  {id:'sd',          name:'Service Desk', fullName:'Service Desk',       icon:'🖥️', color:'#6D28D9', desc:'IT service desk, infrastructure & support'},
+  {id:'telecom',     name:'Telecom',      fullName:'Telecom',            icon:'📡', color:'#0E7490', desc:'Telecommunications networks & connectivity'},
+  {id:'venuetech',   name:'Venue Tech',   fullName:'Venue Technology',   icon:'🏟️', color:'#C2410C', desc:'Venue AV, display & technology systems'},
+];
+
+/* ─── SP STATUS SYMBOLS ─── */
+const SP_SYM = { unknown:'?', yes:'✓', no:'✗' };
+const SP_LABEL = { unknown:'Not yet determined', yes:'Existing SP', no:'New SP' };
+
+/* ─── MUTABLE STATE ─── */
+DEPTS.forEach(d => { d.items = JSON.parse(JSON.stringify(DEFAULTS[d.id])); });
+
+// SP_STATUS: key = "deptId::qKey::name", value = 'unknown'|'yes'|'no'
+let SP_STATUS = {};
+
+// Active SP filter per dept: null | 'unknown' | 'yes' | 'no'
+const SP_FILTER = {};
+
+/* ─── LOAD FROM LOCALSTORAGE ─── */
+(function load() {
+  try {
+    const raw = localStorage.getItem('timelines_la2028_v2');
+    if (raw) { const s = JSON.parse(raw); DEPTS.forEach(d => { if (s[d.id]) d.items = s[d.id]; }); }
+  } catch(e) {}
+  try {
+    const sp = localStorage.getItem('timelines_sp_la2028_v1');
+    if (sp) SP_STATUS = JSON.parse(sp);
+  } catch(e) {}
+})();
+
+function saveState() {
+  const state = {}; DEPTS.forEach(d => { state[d.id] = d.items; });
+  try { localStorage.setItem('timelines_la2028_v2', JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem('timelines_sp_la2028_v1', JSON.stringify(SP_STATUS)); } catch(e) {}
+  showToast('Changes saved ✓');
+}
+
+function confirmReset() {
+  if (!confirm('Reset ALL timelines and service provider data back to original?\n\nThis cannot be reversed.')) return;
+  try { localStorage.removeItem('timelines_la2028_v2'); localStorage.removeItem('timelines_sp_la2028_v1'); } catch(e) {}
+  location.reload();
+}
+
+/* ─── SP STATUS HELPERS ─── */
+function spKey(deptId, qKey, name) { return `${deptId}::${qKey}::${name}`; }
+function getSP(deptId, qKey, name) { return SP_STATUS[spKey(deptId, qKey, name)] || 'unknown'; }
+function setSP(deptId, qKey, name, status) { SP_STATUS[spKey(deptId, qKey, name)] = status; }
+function delSP(deptId, qKey, name) { delete SP_STATUS[spKey(deptId, qKey, name)]; }
+function moveSP(deptId, oldQ, newQ, name) {
+  const old = SP_STATUS[spKey(deptId, oldQ, name)];
+  delete SP_STATUS[spKey(deptId, oldQ, name)];
+  if (old && old !== 'unknown') SP_STATUS[spKey(deptId, newQ, name)] = old;
+}
+
+function spCounts(deptId) {
+  const d = getDept(deptId);
+  let yes=0, no=0, uk=0;
+  Object.entries(d.items).forEach(([q, names]) => {
+    names.forEach(n => {
+      const s = getSP(deptId, q, n);
+      if (s==='yes') yes++; else if (s==='no') no++; else uk++;
+    });
+  });
+  return {yes, no, uk, total: yes+no+uk};
+}
+
+/* ─── HELPERS ─── */
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getDept(id) { return DEPTS.find(d => d.id === id); }
+function deptTotal(d) { return Object.values(d.items).reduce((s,a)=>s+a.length,0); }
+
+/* ─── TOAST ─── */
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ─── BUILD TABS ─── */
+const tabNav = document.getElementById('tabNav');
+DEPTS.forEach((d,i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (i===0?' active':'');
+  btn.dataset.id = d.id; btn.id = 'tab-'+d.id;
+  if (i===0) btn.style.borderBottomColor = d.color;
+  btn.innerHTML = `<span class="tab-icon">${d.icon}</span><span>${d.name}</span><span class="tab-count" id="cnt-${d.id}">${deptTotal(d)}</span>`;
+  btn.addEventListener('click', () => switchTab(d.id));
+  tabNav.appendChild(btn);
+});
+
+/* ─── BUILD PANELS ─── */
+const mainEl = document.getElementById('mainContent');
+DEPTS.forEach((d,i) => {
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (i===0?' active':'');
+  panel.id = 'panel-'+d.id;
+
+  const firstQ = QUARTERS.find(q => d.items[q.key]?.length);
+  const lastQ  = [...QUARTERS].reverse().find(q => d.items[q.key]?.length);
+  const fmtQ = k => k==='Games-Time'?'Games-Time':k.replace(/-20\d\d/,m=>' \''+m.slice(3));
+
+  panel.innerHTML = `
+    <div class="panel-meta">
+      <div class="panel-title-row">
+        <div class="dept-bar" style="background:${d.color}"></div>
+        <div>
+          <div class="panel-name">${d.fullName}</div>
+          <div class="panel-desc">${d.desc}</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-pill" id="total-${d.id}"><strong>${deptTotal(d)}</strong> deliverables</div>
+        ${firstQ?`<div class="stat-pill">Starts <strong>${fmtQ(firstQ.key)}</strong></div>`:''}
+        ${lastQ ?`<div class="stat-pill">Last <strong>${fmtQ(lastQ.key)}</strong></div>`:''}
+      </div>
+    </div>
+    <div class="sp-summary" id="spsummary-${d.id}"></div>
+    <div class="sr-bar" id="sr-${d.id}"></div>
+    <div class="hint">← Scroll for full timeline &nbsp;·&nbsp; Drag chips to move &nbsp;·&nbsp; Click <strong>badge</strong> to set SP status &nbsp;·&nbsp; Hover chip to delete</div>
+    <div class="tl-wrap">
+      <div class="tl-table">
+        ${buildYearRow()}
+        <div class="tl-qtrs" id="qtrs-${d.id}">${buildQtrCells(d)}</div>
+        <div class="tl-items" id="items-${d.id}"></div>
+      </div>
+    </div>`;
+
+  mainEl.appendChild(panel);
+  renderItems(d.id);
+  renderSpSummary(d.id);
+
+  // Attach events once on the stable items container
+  const el = document.getElementById('items-'+d.id);
+  el.addEventListener('dragstart',  onDragStart);
+  el.addEventListener('dragend',    onDragEnd);
+  el.addEventListener('dragover',   onDragOver);
+  el.addEventListener('dragleave',  onDragLeave);
+  el.addEventListener('drop',       onDrop);
+  el.addEventListener('click',      onItemsClick);
+});
+
+/* ─── RENDER ─── */
+function buildYearRow() {
+  return '<div class="tl-years">' +
+    YEAR_SPANS.map(y => `<div class="yr-cell ${y.cls}" style="grid-column:span ${y.span}">${y.label}</div>`).join('') +
+    '</div>';
+}
+function buildQtrCells(d) {
+  return QUARTERS.map(q => {
+    const has = (d.items[q.key]||[]).length > 0;
+    const isG = q.key==='Games-Time';
+    let cls = 'q-cell' + (has?' has-items':'') + (isG?' games-q':'');
+    const style = has && !isG ? `style="color:${d.color}"` : '';
+    return `<div class="${cls}" ${style}>${q.short}</div>`;
+  }).join('');
+}
+
+function renderItems(deptId) {
+  const d = getDept(deptId);
+  const el = document.getElementById('items-'+deptId);
+  if (!el) return;
+  const filter = SP_FILTER[deptId] || null;
+
+  el.innerHTML = QUARTERS.map(q => {
+    const items = d.items[q.key] || [];
+    const isG = q.key==='Games-Time';
+    let cls = 'tl-col' + (isG?' games-col':'') + (!items.length?' empty':'');
+    if (filter) cls += ' sp-filtered';
+
+    const chips = items.map(name => {
+      const sp = getSP(deptId, q.key, name);
+      const showClass = (!filter || filter===sp) ? ' sp-show' : '';
+      return `<div class="chip${showClass}" draggable="true"
+        data-dept="${deptId}" data-q="${esc(q.key)}" data-name="${esc(name)}" data-sp="${sp}"
+        title="${esc(name)}">
+        <span>${esc(name)}</span>
+        <span class="sp-badge" data-action="sp" data-dept="${deptId}" data-q="${esc(q.key)}" data-name="${esc(name)}" title="${SP_LABEL[sp]}">${SP_SYM[sp]}</span>
+        <span class="chip-del" data-action="del" data-dept="${deptId}" data-q="${esc(q.key)}" data-name="${esc(name)}">✕</span>
+      </div>`;
+    }).join('');
+
+    const addBtn = `<button class="add-btn" data-action="add" data-dept="${deptId}" data-q="${esc(q.key)}">＋</button>`;
+    return `<div class="${cls}" data-dept="${deptId}" data-q="${esc(q.key)}">${chips}${addBtn}</div>`;
+  }).join('');
+
+  // Update quarter dots + count badge
+  const qtrsEl = document.getElementById('qtrs-'+deptId);
+  if (qtrsEl) qtrsEl.innerHTML = buildQtrCells(d);
+  const cntEl = document.getElementById('cnt-'+deptId);
+  if (cntEl) cntEl.textContent = deptTotal(d);
+  const totEl = document.getElementById('total-'+deptId);
+  if (totEl) totEl.innerHTML = `<strong>${deptTotal(d)}</strong> deliverables`;
+
+  applySearch(document.getElementById('searchInput').value.trim(), deptId);
+}
+
+function renderSpSummary(deptId) {
+  const el = document.getElementById('spsummary-'+deptId);
+  if (!el) return;
+  const c = spCounts(deptId);
+  const af = SP_FILTER[deptId];
+  el.innerHTML = `
+    <span class="sp-summary-label">SP Status:</span>
+    <span class="sp-pill yes${af==='yes'?' filter-active':''}" data-spfilter="yes" data-dept="${deptId}" title="Click to filter">
+      <span class="dot"></span> ${c.yes} Existing SP
+    </span>
+    <span class="sp-pill no${af==='no'?' filter-active':''}" data-spfilter="no" data-dept="${deptId}" title="Click to filter">
+      <span class="dot"></span> ${c.no} New SP
+    </span>
+    <span class="sp-pill uk${af==='unknown'?' filter-active':''}" data-spfilter="unknown" data-dept="${deptId}" title="Click to filter">
+      <span class="dot"></span> ${c.uk} Unknown
+    </span>
+    <span class="sp-summary-legend">Click a pill to filter · Click badge on any chip to set status</span>`;
+  // SP filter click
+  el.querySelectorAll('[data-spfilter]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const status = pill.dataset.spfilter;
+      SP_FILTER[deptId] = (SP_FILTER[deptId]===status) ? null : status;
+      renderItems(deptId);
+      renderSpSummary(deptId);
+    });
+  });
+}
+
+/* ─── DRAG & DROP ─── */
+let dragInfo = null;
+
+function onDragStart(e) {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  dragInfo = { deptId:chip.dataset.dept, qKey:chip.dataset.q, name:chip.dataset.name };
+  chip.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', chip.dataset.name);
+}
+function onDragEnd(e) {
+  const chip = e.target.closest('.chip');
+  if (chip) chip.classList.remove('dragging');
+  clearDragOver(); dragInfo = null;
+}
+function onDragOver(e) {
+  if (!dragInfo) return;
+  const col = e.target.closest('.tl-col');
+  if (!col) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  clearDragOver(); col.classList.add('drag-over');
+}
+function onDragLeave(e) {
+  const col = e.target.closest('.tl-col');
+  if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault(); clearDragOver();
+  if (!dragInfo) return;
+  const col = e.target.closest('.tl-col');
+  if (!col) { dragInfo=null; return; }
+  const destDept = col.dataset.dept, destQ = col.dataset.q;
+  if (destDept!==dragInfo.deptId || destQ===dragInfo.qKey) { dragInfo=null; return; }
+
+  const d = getDept(dragInfo.deptId);
+  moveSP(dragInfo.deptId, dragInfo.qKey, destQ, dragInfo.name);
+  d.items[dragInfo.qKey] = (d.items[dragInfo.qKey]||[]).filter(n=>n!==dragInfo.name);
+  if (!d.items[dragInfo.qKey].length) delete d.items[dragInfo.qKey];
+  if (!d.items[destQ]) d.items[destQ] = [];
+  d.items[destQ].push(dragInfo.name);
+
+  renderItems(dragInfo.deptId);
+  renderSpSummary(dragInfo.deptId);
+  saveState();
+  dragInfo = null;
+}
+function clearDragOver() { document.querySelectorAll('.tl-col.drag-over').forEach(c=>c.classList.remove('drag-over')); }
+
+/* ─── CLICK: DELETE / ADD / SP ─── */
+let activeAddInput = null;
+
+function onItemsClick(e) {
+  const action = e.target.closest('[data-action]');
+  if (!action) return;
+  const act=action.dataset.action, deptId=action.dataset.dept, qKey=action.dataset.q;
+
+  if (act==='del') {
+    const name = action.dataset.name;
+    const d = getDept(deptId);
+    delSP(deptId, qKey, name);
+    d.items[qKey] = (d.items[qKey]||[]).filter(n=>n!==name);
+    if (!d.items[qKey].length) delete d.items[qKey];
+    renderItems(deptId); renderSpSummary(deptId); saveState();
+    return;
+  }
+  if (act==='sp') {
+    openSpPopover(action, deptId, qKey, action.dataset.name);
+    return;
+  }
+  if (act==='add') {
+    if (activeAddInput) cancelAddInput();
+    const col = e.currentTarget.querySelector(`.tl-col[data-dept="${CSS.escape(deptId)}"][data-q="${CSS.escape(qKey)}"]`);
+    if (!col) return;
+    const addBtn = col.querySelector('.add-btn');
+    if (addBtn) addBtn.style.display = 'none';
+    const wrap = document.createElement('div');
+    wrap.className = 'add-wrap';
+    wrap.innerHTML = `<input class="add-input" type="text" placeholder="Deliverable name…" autocomplete="off" spellcheck="false">
+      <div class="add-actions">
+        <button class="add-ok" data-action="add-ok">✓</button>
+        <button class="add-cancel" data-action="add-cancel">✕</button>
+      </div>`;
+    col.appendChild(wrap);
+    const input = wrap.querySelector('.add-input'); input.focus();
+    activeAddInput = {deptId, qKey, wrap, addBtn};
+    wrap.querySelector('[data-action="add-ok"]').addEventListener('click', confirmAddInput);
+    wrap.querySelector('[data-action="add-cancel"]').addEventListener('click', cancelAddInput);
+    input.addEventListener('keydown', e2 => { if(e2.key==='Enter'){e2.preventDefault();confirmAddInput();} if(e2.key==='Escape')cancelAddInput(); });
+    return;
+  }
+  if (act==='add-ok')     { confirmAddInput(); return; }
+  if (act==='add-cancel') { cancelAddInput();  return; }
+}
+
+function confirmAddInput() {
+  if (!activeAddInput) return;
+  const {deptId, qKey, wrap, addBtn} = activeAddInput;
+  const val = wrap.querySelector('.add-input').value.trim();
+  if (val) {
+    const d = getDept(deptId);
+    if (!d.items[qKey]) d.items[qKey] = [];
+    d.items[qKey].push(val);
+    activeAddInput = null;
+    renderItems(deptId); renderSpSummary(deptId); saveState();
+  } else { cancelAddInput(); }
+}
+function cancelAddInput() {
+  if (!activeAddInput) return;
+  activeAddInput.wrap.remove();
+  if (activeAddInput.addBtn) activeAddInput.addBtn.style.display = '';
+  activeAddInput = null;
+}
+
+/* ─── SP POPOVER ─── */
+const spPopover = document.getElementById('spPopover');
+let spPopContext = null;
+
+function openSpPopover(badgeEl, deptId, qKey, name) {
+  closeSpPopover();
+  spPopContext = {deptId, qKey, name};
+  const cur = getSP(deptId, qKey, name);
+  spPopover.querySelectorAll('.sp-opt').forEach(o => {
+    o.classList.toggle('active', o.dataset.status===cur);
+  });
+  spPopover.classList.add('open');
+  // Position near badge
+  const rect = badgeEl.getBoundingClientRect();
+  let top = rect.bottom + 6, left = rect.left - 10;
+  if (left + 220 > window.innerWidth-8) left = window.innerWidth - 228;
+  if (left < 8) left = 8;
+  // Flip up if too close to bottom
+  if (top + 130 > window.innerHeight) top = rect.top - 136;
+  spPopover.style.top  = top  + 'px';
+  spPopover.style.left = left + 'px';
+}
+function closeSpPopover() {
+  spPopover.classList.remove('open');
+  spPopContext = null;
+}
+
+spPopover.querySelectorAll('.sp-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (!spPopContext) return;
+    const {deptId, qKey, name} = spPopContext;
+    setSP(deptId, qKey, name, opt.dataset.status);
+    closeSpPopover();
+    renderItems(deptId);
+    renderSpSummary(deptId);
+    saveState();
+  });
+});
+
+document.addEventListener('click', e => {
+  if (!spPopover.classList.contains('open')) return;
+  if (!spPopover.contains(e.target) && !e.target.closest('.sp-badge')) closeSpPopover();
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeSpPopover(); });
+
+/* ─── TAB SWITCHING ─── */
+let activeTabId = 'cyber';
+function switchTab(id) {
+  if (activeAddInput) cancelAddInput();
+  closeSpPopover();
+  activeTabId = id;
+  const dept = getDept(id);
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.style.borderBottomColor='transparent'; });
+  const btn = document.getElementById('tab-'+id);
+  if (btn) { btn.classList.add('active'); btn.style.borderBottomColor=dept.color; }
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-'+id);
+  if (panel) panel.classList.add('active');
+  applySearch(document.getElementById('searchInput').value.trim(), id);
+}
+
+/* ─── SEARCH ─── */
+const searchInput = document.getElementById('searchInput');
+const searchClear = document.getElementById('searchClear');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  searchClear.classList.toggle('on', q.length>0);
+  applySearch(q, activeTabId);
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value=''; searchClear.classList.remove('on');
+  applySearch('', activeTabId); searchInput.focus();
+});
+function applySearch(query, deptId) {
+  const q = query.toLowerCase();
+  const panel = document.getElementById('panel-'+deptId);
+  if (!panel) return;
+  let count = 0;
+  panel.querySelectorAll('.chip').forEach(chip => {
+    chip.classList.remove('dim','match');
+    if (!q) return;
+    chip.dataset.name.toLowerCase().includes(q) ? (chip.classList.add('match'), count++) : chip.classList.add('dim');
+  });
+  const bar = document.getElementById('sr-'+deptId);
+  if (bar) {
+    if (q) {
+      bar.classList.add('on');
+      const ok = count>0;
+      bar.textContent = ok ? `Found ${count} match${count!==1?'es':''} for "${query}"` : `No matches for "${query}"`;
+      bar.style.cssText = ok ? 'background:#EFF6FF;border-color:#BFDBFE;color:#1E40AF' : 'background:#FFF1F2;border-color:#FECDD3;color:#9F1239';
+    } else { bar.classList.remove('on'); }
+  }
+}
+
+/* ─── GLOBAL ADD MODAL ─── */
+function openAddModal() {
+  if (activeAddInput) cancelAddInput();
+  closeSpPopover();
+  document.getElementById('modalDept').innerHTML = DEPTS.map(d => `<option value="${d.id}" ${d.id===activeTabId?'selected':''}>${d.icon} ${d.fullName}</option>`).join('');
+  document.getElementById('modalQtr').innerHTML  = QUARTERS.map(q => `<option value="${q.key}">${q.key==='Games-Time'?'Games-Time':q.key.replace('-',' ')}</option>`).join('');
+  document.getElementById('modalName').value = '';
+  document.getElementById('addModal').classList.add('on');
+  setTimeout(() => document.getElementById('modalName').focus(), 50);
+}
+function closeAddModal() { document.getElementById('addModal').classList.remove('on'); }
+function submitAddModal() {
+  const deptId = document.getElementById('modalDept').value;
+  const qKey   = document.getElementById('modalQtr').value;
+  const name   = document.getElementById('modalName').value.trim();
+  if (!name) { document.getElementById('modalName').focus(); return; }
+  const d = getDept(deptId);
+  if (!d.items[qKey]) d.items[qKey] = [];
+  d.items[qKey].push(name);
+  closeAddModal();
+  renderItems(deptId); renderSpSummary(deptId);
+  if (activeTabId!==deptId) switchTab(deptId);
+  saveState();
+}
+document.getElementById('addModal').addEventListener('click', e => { if (e.target===document.getElementById('addModal')) closeAddModal(); });
+document.getElementById('modalName').addEventListener('keydown', e => { if(e.key==='Enter')submitAddModal(); if(e.key==='Escape')closeAddModal(); });
+
+/* ─── KEYBOARD ─── */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='f') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+  if (e.key==='Escape' && !spPopover.classList.contains('open') && !document.getElementById('addModal').classList.contains('on')) {
+    if (activeAddInput) { cancelAddInput(); return; }
+    if (document.activeElement===searchInput) { searchInput.value=''; searchClear.classList.remove('on'); applySearch('',activeTabId); searchInput.blur(); }
+  }
+});
+
+/* ─── EXPORT ─── */
+function exportState() {
+  // Snapshot current data
+  const itemsState = {};
+  DEPTS.forEach(d => { itemsState[d.id] = d.items; });
+
+  // Parse current page into a detached document so we can modify it safely
+  const parser   = new DOMParser();
+  const exportDoc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
+
+  // Clear dynamically-built UI — JS will regenerate it when the file is opened
+  exportDoc.getElementById('tabNav').innerHTML      = '';
+  exportDoc.getElementById('mainContent').innerHTML = '';
+
+  // Remove any prior state-preload script (in case this is already an export)
+  const prev = exportDoc.getElementById('state-preload');
+  if (prev) prev.remove();
+
+  // Inject a tiny script at the very top of <head> that seeds localStorage
+  // with the current snapshot before the app initialises
+  const seed = exportDoc.createElement('script');
+  seed.id          = 'state-preload';
+  seed.textContent =
+    'try{' +
+    'localStorage.setItem("timelines_la2028_v2",'    + JSON.stringify(JSON.stringify(itemsState)) + ');' +
+    'localStorage.setItem("timelines_sp_la2028_v1",' + JSON.stringify(JSON.stringify(SP_STATUS))   + ');' +
+    '}catch(e){}';
+  exportDoc.head.insertBefore(seed, exportDoc.head.firstChild);
+
+  const html = '<!DOCTYPE html>\n' + exportDoc.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `timelines-${date}.html`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('Exported ✓  —  Send the .html file — recipient just opens it');
+}
+
+/* ─── PASSWORD ─── */
+(function initAuth() {
+  if (sessionStorage.getItem('tl_auth') === '1') {
+    document.getElementById('pwOverlay').classList.add('hidden');
+    return;
+  }
+  document.getElementById('pwBtn').addEventListener('click', checkPassword);
+  document.getElementById('pwInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPassword();
+  });
+})();
+
+function checkPassword() {
+  const input = document.getElementById('pwInput');
+  const error = document.getElementById('pwError');
+  if (input.value.trim().toLowerCase() === 'dteclosangeles') {
+    sessionStorage.setItem('tl_auth', '1');
+    document.getElementById('pwOverlay').classList.add('hidden');
+    input.value = '';
+    error.textContent = '';
+  } else {
+    error.textContent = 'Incorrect password. Please try again.';
+    input.classList.remove('shake');
+    void input.offsetWidth; // trigger reflow to restart animation
+    input.classList.add('shake');
+    input.value = '';
+    input.focus();
+  }
+}
+
+/* ─── INIT ─── */
+switchTab('cyber');
+</script>
+</body>
+</html>
